@@ -13,8 +13,8 @@ Already enforced (do not repeat): nothing. There is no CI and no git
 hook, and nothing runs ruff (`pyproject.toml` only sets its target
 version). Tests run by hand with `uv run pytest tests/ -v`. In
 `tests/test_integration.py` the tests marked `skipif` skip when `npx`
-is missing, and `test_connection_lifecycle` then passes without its
-assertions; `tests/test_http_integration.py` connects to the live
+is missing, and `test_connection_lifecycle` then checks only the
+disconnected state; `tests/test_http_integration.py` connects to the live
 `https://mcp.deepwiki.com/mcp` and does not skip.
 
 Always flag:
@@ -35,10 +35,11 @@ Always flag:
 - in either transport's `_connection_task_impl`, `except Exception`
   where `except BaseException` is used, or a path that exits before
   readiness without setting `_ready_event`; `connect()` then hangs.
-  In the HTTP client, also flag removal of the `CONNECTION_TIMEOUT`
-  wait, of the `_extract_root_cause` unwrap of `ExceptionGroup`, or
-  counting a cancellation as a circuit-breaker failure (commits
-  21a4207, b32b7ce).
+  In either transport, also flag a cancellation recorded as
+  `_last_error` or a circuit-breaker failure. In the HTTP client, flag
+  removal of the `CONNECTION_TIMEOUT` wait or of the
+  `_extract_root_cause` unwrap of `ExceptionGroup` (commits 21a4207,
+  b32b7ce).
 - a change that breaks the 2- or 3-tuple unpack of
   `streamable_http_client`; downstream pins use both SDK shapes
   (commit b32b7ce).
